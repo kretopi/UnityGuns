@@ -212,6 +212,24 @@ public class Hv_UnityGuns_Editor : Editor {
       _dsp.SetFloatParameter(Hv_UnityGuns_AudioLib.Parameter.Volmaster, newVolmaster);
     }
     GUILayout.EndHorizontal();
+    
+    // volOsc
+    GUILayout.BeginHorizontal();
+    float volOsc = _dsp.GetFloatParameter(Hv_UnityGuns_AudioLib.Parameter.Volosc);
+    float newVolosc = EditorGUILayout.Slider("volOsc", volOsc, 0.0f, 2.0f);
+    if (volOsc != newVolosc) {
+      _dsp.SetFloatParameter(Hv_UnityGuns_AudioLib.Parameter.Volosc, newVolosc);
+    }
+    GUILayout.EndHorizontal();
+    
+    // volPhasor
+    GUILayout.BeginHorizontal();
+    float volPhasor = _dsp.GetFloatParameter(Hv_UnityGuns_AudioLib.Parameter.Volphasor);
+    float newVolphasor = EditorGUILayout.Slider("volPhasor", volPhasor, 0.0f, 2.0f);
+    if (volPhasor != newVolphasor) {
+      _dsp.SetFloatParameter(Hv_UnityGuns_AudioLib.Parameter.Volphasor, newVolphasor);
+    }
+    GUILayout.EndHorizontal();
     EditorGUI.indentLevel--;
   }
 }
@@ -258,6 +276,8 @@ public class Hv_UnityGuns_AudioLib : MonoBehaviour {
     Volhigh = 0x9EA7F5FD,
     Vollow = 0xB7DBC418,
     Volmaster = 0xBB68E1AA,
+    Volosc = 0xA677AEED,
+    Volphasor = 0xFD310992,
   }
   
   // Delegate method for receiving float messages from the patch context (thread-safe).
@@ -299,6 +319,8 @@ public class Hv_UnityGuns_AudioLib : MonoBehaviour {
   public float volHigh = 1.0f;
   public float volLow = 1.0f;
   public float volMaster = 1.0f;
+  public float volOsc = 1.0f;
+  public float volPhasor = 1.0f;
 
   // internal state
   private Hv_UnityGuns_Context _context;
@@ -334,6 +356,8 @@ public class Hv_UnityGuns_AudioLib : MonoBehaviour {
       case Parameter.Volhigh: return volHigh;
       case Parameter.Vollow: return volLow;
       case Parameter.Volmaster: return volMaster;
+      case Parameter.Volosc: return volOsc;
+      case Parameter.Volphasor: return volPhasor;
       default: return 0.0f;
     }
   }
@@ -415,6 +439,16 @@ public class Hv_UnityGuns_AudioLib : MonoBehaviour {
         volMaster = x;
         break;
       }
+      case Parameter.Volosc: {
+        x = Mathf.Clamp(x, 0.0f, 2.0f);
+        volOsc = x;
+        break;
+      }
+      case Parameter.Volphasor: {
+        x = Mathf.Clamp(x, 0.0f, 2.0f);
+        volPhasor = x;
+        break;
+      }
       default: return;
     }
     if (IsInstantiated()) _context.SendFloatToReceiver((uint) param, x);
@@ -455,6 +489,8 @@ public class Hv_UnityGuns_AudioLib : MonoBehaviour {
     _context.SendFloatToReceiver((uint) Parameter.Volhigh, volHigh);
     _context.SendFloatToReceiver((uint) Parameter.Vollow, volLow);
     _context.SendFloatToReceiver((uint) Parameter.Volmaster, volMaster);
+    _context.SendFloatToReceiver((uint) Parameter.Volosc, volOsc);
+    _context.SendFloatToReceiver((uint) Parameter.Volphasor, volPhasor);
   }
   
   private void Update() {
@@ -567,7 +603,7 @@ class Hv_UnityGuns_Context {
 
   private delegate void SendHook(IntPtr context, string sendName, uint sendHash, IntPtr message);
 
-  public Hv_UnityGuns_Context(double sampleRate, int poolKb=10, int inQueueKb=15, int outQueueKb=2) {
+  public Hv_UnityGuns_Context(double sampleRate, int poolKb=10, int inQueueKb=17, int outQueueKb=2) {
     gch = GCHandle.Alloc(msgQueue);
     _context = hv_UnityGuns_new_with_options(sampleRate, poolKb, inQueueKb, outQueueKb);
     hv_setPrintHook(_context, new PrintHook(OnPrint));
